@@ -5,16 +5,22 @@
     android:layout_height="match_parent"
     android:background="#000">
 
-    <tcking.github.com.giraffeplayer.IjkVideoView
-        android:id="@+id/video_view"
+    <RelativeLayout
+        android:id="@+id/view_layer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/hero_image"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
+        <tcking.github.com.giraffeplayer.IjkVideoView
+            android:id="@+id/video_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <ImageView
+            android:id="@+id/hero_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+    </RelativeLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"

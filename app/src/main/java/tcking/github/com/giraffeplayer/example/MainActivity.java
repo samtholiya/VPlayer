@@ -29,9 +29,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         player = new VPlayer(this);
         player.addPlayerDialogAdapter(new PlayerDialogAdapter() {
+            private SimulationHandler mSimulationHandler;
             @Override
             public void bind(SimulationHandler simulationHandler) {
                 Log.d(getClass().getName(),"bind");
+                mSimulationHandler = simulationHandler;
             }
 
             @Override

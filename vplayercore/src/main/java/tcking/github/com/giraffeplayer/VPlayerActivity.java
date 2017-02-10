@@ -21,7 +21,7 @@ public class VPlayerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.giraffe_player);
+        setContentView(R.layout.v_player);
         Config config = getIntent().getParcelableExtra("config");
         if (config == null || TextUtils.isEmpty(config.url)) {
             Toast.makeText(this, R.string.giraffe_player_url_empty, Toast.LENGTH_SHORT).show();

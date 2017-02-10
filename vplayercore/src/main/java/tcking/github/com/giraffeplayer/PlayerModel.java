@@ -1,5 +1,6 @@
 package tcking.github.com.giraffeplayer;
 
+import android.view.View;
 import android.webkit.URLUtil;
 
 import java.net.URLConnection;
@@ -11,11 +12,21 @@ import java.net.URLConnection;
 public class PlayerModel {
     private String mPath;
     private String mAudioPath;
-    public final static String BROKEN = "broken";
+    private MediaType mType;
+    private View mView;
+    public PlayerModel(View view,String audioPath){
+        mView = view;
+        mAudioPath = audioPath;
+        mType = MediaType.VIEW_AUDIO;
+    }
 
     public PlayerModel(String path, String audioPath) {
         mPath = path;
         mAudioPath = audioPath;
+    }
+
+    public void setType(MediaType type) {
+        mType = type;
     }
 
     public String getPath() {
@@ -36,19 +47,23 @@ public class PlayerModel {
 
     public MediaType getType() {
         if (mPath != null) {
-            switch (getType(mPath)) {
-                case "video":
-                    return MediaType.VIDEO;
-                case "image":
-                    if (mAudioPath == null) {
-                        return MediaType.IMAGE;
-                    }
-                    return MediaType.IMAGE_AUDIO;
-                default:
-                    if (URLUtil.isValidUrl(mPath))
-                        return MediaType.URL;
-                    else
-                        return MediaType.BROKEN;
+            if (mType == null) {
+                switch (getType(mPath)) {
+                    case "video":
+                        return MediaType.VIDEO;
+                    case "image":
+                        if (mAudioPath == null) {
+                            return MediaType.IMAGE;
+                        }
+                        return MediaType.IMAGE_AUDIO;
+                    default:
+                        if (URLUtil.isValidUrl(mPath))
+                            return MediaType.URL;
+                        else
+                            return MediaType.BROKEN;
+                }
+            } else {
+                return mType;
             }
         }
         return MediaType.BROKEN;
@@ -71,7 +86,8 @@ public class PlayerModel {
         AUDIO("audio"),
         IMAGE_AUDIO("image audio"),
         BROKEN("broken"),
-        URL("url");
+        URL("url"),
+        VIEW_AUDIO("view audio");
 
         private final String text;
 

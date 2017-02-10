@@ -25,12 +25,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -55,7 +57,7 @@ public class VPlayer implements SimulationHandler {
      */
     public static final String SCALETYPE_WRAPCONTENT = "wrapContent";
     /**
-     * fitXY:scale in X and Y independently, so that video matches view exactly.不剪裁,非等比例拉伸画面填满整个View
+     * fitXY:scale in X and Y independently, so that video matches view exactly.
      */
     public static final String SCALETYPE_FITXY = "fitXY";
     /**
@@ -74,8 +76,8 @@ public class VPlayer implements SimulationHandler {
     private static final int MESSAGE_RESTART_PLAY = 5;
     private static final long UPDATE_INTERVAL = 500;
     private final Activity activity;
-    private final IjkVideoView videoView;
-    private ImageView imageView;
+    private final IjkVideoView mVideoView;
+    private ImageView mImageView;
     private final SeekBar seekBar;
     private final AudioManager audioManager;
     private final int mMaxVolume;
@@ -90,7 +92,7 @@ public class VPlayer implements SimulationHandler {
     private int STATUS_COMPLETED = 4;
     private long pauseTime;
     private int status = STATUS_IDLE;
-    private boolean isLive = false;//是否为直播
+    private boolean isLive = false;// is Live Video streaming
     private OrientationEventListener orientationEventListener;
     final private int initHeight;
     private int defaultTimeout = 3000;
@@ -109,10 +111,10 @@ public class VPlayer implements SimulationHandler {
                 doPauseResume();
                 show(defaultTimeout);
             } else if (v.getId() == R.id.app_video_replay_icon) {
-                if(!isSimulation) {
-                    videoView.seekTo(0);
-                    videoView.start();
-                }else {
+                if (!isSimulation) {
+                    mVideoView.seekTo(0);
+                    mVideoView.start();
+                } else {
                     simulationSeek(0);
                 }
                 doPauseResume();
@@ -181,19 +183,19 @@ public class VPlayer implements SimulationHandler {
     private void doPauseResume() {
         if (status == STATUS_COMPLETED) {
             $.id(R.id.app_video_replay).gone();
-            videoView.seekTo(0);
-            videoView.start();
-        } else if (videoView.isPlaying()) {
+            mVideoView.seekTo(0);
+            mVideoView.start();
+        } else if (mVideoView.isPlaying()) {
             statusChange(STATUS_PAUSE);
-            videoView.pause();
+            mVideoView.pause();
         } else {
-            videoView.start();
+            mVideoView.start();
         }
         updatePausePlay();
     }
 
     private void updatePausePlay() {
-        if (videoView.isPlaying()) {
+        if (mVideoView.isPlaying()) {
             $.id(R.id.app_video_play).image(R.drawable.ic_stop_white_24dp);
         } else {
             $.id(R.id.app_video_play).image(R.drawable.ic_play_arrow_white_24dp);
@@ -258,13 +260,13 @@ public class VPlayer implements SimulationHandler {
                 mPosition = duration - mDurationList.get(mediaIndex);
                 $.id(R.id.app_video_loading).visible();
                 simulatePlay(playerModels.get(mediaIndex++));
-                videoView.seekTo((int) (newPosition - mPosition));
-                videoView.setOnCompletionListener(mCompleteListener);*/
+                mVideoView.seekTo((int) (newPosition - mPosition));
+                mVideoView.setOnCompletionListener(mCompleteListener);*/
                 simulationSeek(newPosition);
             }
 
             if (instantSeeking && !isSimulation) {
-                videoView.seekTo(newPosition);
+                mVideoView.seekTo(newPosition);
             }
             $.id(R.id.app_video_currentTime).text(time);
         }
@@ -286,7 +288,7 @@ public class VPlayer implements SimulationHandler {
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
             if (!instantSeeking && !isSimulation) {
-                videoView.seekTo((int) ((duration * seekBar.getProgress() * 1.0) / 1000));
+                mVideoView.seekTo((int) ((duration * seekBar.getProgress() * 1.0) / 1000));
             }
             show(defaultTimeout);
             handler.removeMessages(MESSAGE_SHOW_PROGRESS);
@@ -316,7 +318,7 @@ public class VPlayer implements SimulationHandler {
                 case MESSAGE_SEEK_NEW_POSITION:
                     if (!isLive && newPosition >= 0) {
                         //TODO: CHECK HERE
-                        videoView.seekTo((int) newPosition);
+                        mVideoView.seekTo((int) newPosition);
                         newPosition = -1;
                     }
                     break;
@@ -336,10 +338,7 @@ public class VPlayer implements SimulationHandler {
     };
 
     public VPlayer(final Activity activity) {
-        Log.d("mPosition","position is GP"+ mPosition);
         mPosition = 0;
-
-        Log.d("mPosition","position is GP"+ mPosition);
         mRetriever = new MediaMetadataRetriever();
         try {
             IjkMediaPlayer.loadLibrariesOnce(null);
@@ -351,17 +350,17 @@ public class VPlayer implements SimulationHandler {
         this.activity = activity;
         screenWidthPixels = activity.getResources().getDisplayMetrics().widthPixels;
         $ = new Query(activity);
-        videoView = (IjkVideoView) activity.findViewById(R.id.video_view);
-        imageView = (ImageView) activity.findViewById(R.id.hero_image);
+        mVideoView = (IjkVideoView) activity.findViewById(R.id.video_view);
+        mImageView = (ImageView) activity.findViewById(R.id.hero_image);
         // Default Player
-        /*videoView.setOnCompletionListener(new IMediaPlayer.OnCompletionListener() {
+        /*mVideoView.setOnCompletionListener(new IMediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(IMediaPlayer mp) {
                 statusChange(STATUS_COMPLETED);
                 oncomplete.run();
             }
         });*/
-        videoView.setOnErrorListener(new IMediaPlayer.OnErrorListener() {
+        mVideoView.setOnErrorListener(new IMediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(IMediaPlayer mp, int what, int extra) {
                 statusChange(STATUS_ERROR);
@@ -369,7 +368,7 @@ public class VPlayer implements SimulationHandler {
                 return true;
             }
         });
-        videoView.setOnInfoListener(new IMediaPlayer.OnInfoListener() {
+        mVideoView.setOnInfoListener(new IMediaPlayer.OnInfoListener() {
             @Override
             public boolean onInfo(IMediaPlayer mp, int what, int extra) {
                 switch (what) {
@@ -508,9 +507,9 @@ public class VPlayer implements SimulationHandler {
         pauseTime = System.currentTimeMillis();
         show(0);
         if (status == STATUS_PLAYING) {
-            videoView.pause();
+            mVideoView.pause();
             if (!isLive) {
-                currentPosition = videoView.getCurrentPosition();
+                currentPosition = mVideoView.getCurrentPosition();
             }
         }
     }
@@ -519,13 +518,13 @@ public class VPlayer implements SimulationHandler {
         pauseTime = 0;
         if (status == STATUS_PLAYING) {
             if (isLive) {
-                videoView.seekTo(0);
+                mVideoView.seekTo(0);
             } else {
                 if (currentPosition > 0) {
-                    videoView.seekTo(currentPosition);
+                    mVideoView.seekTo(currentPosition);
                 }
             }
-            videoView.start();
+            mVideoView.start();
         }
     }
 
@@ -535,7 +534,7 @@ public class VPlayer implements SimulationHandler {
     }
 
     private void doOnConfigurationChanged(final boolean portrait) {
-        if (videoView != null && !fullScreenOnly) {
+        if (mVideoView != null && !fullScreenOnly) {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -587,7 +586,7 @@ public class VPlayer implements SimulationHandler {
     public void onDestroy() {
         orientationEventListener.disable();
         handler.removeCallbacksAndMessages(null);
-        videoView.stopPlayback();
+        mVideoView.stopPlayback();
     }
 
 
@@ -603,19 +602,16 @@ public class VPlayer implements SimulationHandler {
         if (playerSupport) {
             mPosition = 0;
 
-            Log.d("mPosition","position is play String "+ mPosition);
             $.id(R.id.app_video_loading).visible();
             mDuration = getVideoDuration(url);
-            playRaw(url);
+            playRaw(url, 0);
         }
     }
 
     private void simulationSeek(int newPosition) {
-        long temp = 0;
         mediaIndex = 0;
         mPosition = 0;
 
-        Log.d("mPosition","position is sSeek "+ mPosition);
         isUserSeek = true;
         long duration = mDurationList.get(mediaIndex);
         while (duration < newPosition) {
@@ -624,27 +620,49 @@ public class VPlayer implements SimulationHandler {
         }
         mPosition = duration - mDurationList.get(mediaIndex);
 
-        Log.d("mPosition","position is sSeek 2 "+ mPosition);
         $.id(R.id.app_video_loading).visible();
-        simulatePlay(playerModels.get(mediaIndex++));
-        videoView.seekTo((int) (newPosition - mPosition));
-        videoView.setOnCompletionListener(mCompleteListener);
+        simulatePlay(playerModels.get(mediaIndex++), (int) (newPosition - mPosition));
+        mVideoView.setOnCompletionListener(mCompleteListener);
     }
 
+    /**
+     * Get The Layout of Display
+     *
+     * */
+    public RelativeLayout getViewLayer(){
+        return (RelativeLayout) activity.findViewById(R.id.view_layer);
+    }
 
-    private void playRaw(String url) {
-        videoView.setVideoPath(url);
-        videoView.start();
+    /**
+     * Get Default videoView
+     *
+     * */
+    public IjkVideoView getVideoView(){
+        return mVideoView;
+    }
+
+    /**
+     *  Get the default ImageView
+     *
+     * */
+    public ImageView getImageView(){
+        return mImageView;
+    }
+
+    private void playRaw(String url, int seek) {
+        mVideoView.setVideoPath(url);
+        mVideoView.seekTo(seek);
+        mVideoView.start();
     }
 
     public void play(PlayerModel url) {
-        initialize();
-        this.url = url.getPath();
+        /*initialize();
+        *//*this.url = url.getPath();
         if (playerSupport) {
             isSimulation = false;
             $.id(R.id.app_video_loading).visible();
-            videoView.setVideoPath(this.url);
-            videoView.setOnCompletionListener(new IMediaPlayer.OnCompletionListener() {
+            mVideoView.setVideoPath(this.url);
+            mVideoView.setOnCompletionListener(new IMediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(IMediaPlayer mp) {
                     statusChange(STATUS_COMPLETED);
@@ -652,8 +670,9 @@ public class VPlayer implements SimulationHandler {
                 }
             });
             mDuration = getVideoDuration(this.url);
-            videoView.start();
-        }
+            mVideoView.start();
+        }*/
+        play(Arrays.asList(new PlayerModel[]{url}));
     }
 
 
@@ -673,8 +692,6 @@ public class VPlayer implements SimulationHandler {
         mediaIndex = 0;
         mDuration = 0;
         mPosition = 0;
-
-        Log.d("mPosition","position is init"+ mPosition);
     }
 
     private Handler mHandler = new Handler();
@@ -684,9 +701,9 @@ public class VPlayer implements SimulationHandler {
 
         @Override
         public void run() {
-            mCurrentPosition = videoView.getCurrentPosition() + (int) mPosition;
+            mCurrentPosition = mVideoView.getCurrentPosition() + (int) mPosition;
             if (mPlayerDialogAdapter != null) {
-                if (previousTime != mCurrentPosition && videoView.isPlaying()) {
+                if (previousTime != mCurrentPosition && mVideoView.isPlaying()) {
                     mPlayerDialogAdapter.timeChanged(mCurrentPosition, isUserSeek);
                     if (isUserSeek)
                         isUserSeek = false;
@@ -706,15 +723,15 @@ public class VPlayer implements SimulationHandler {
 
     @Override
     public void blockPlay() {
-        if (videoView.isPlaying())
-            videoView.pause();
+        if (mVideoView.isPlaying())
+            mVideoView.pause();
         mInvokeRunnable = false;
     }
 
     @Override
     public void notifyProcessComplete() {
-        if (!videoView.isPlaying())
-            videoView.resume();
+        if (!mVideoView.isPlaying())
+            mVideoView.resume();
         if (mPlayerDialogAdapter.seekToDifferentPosition(mCurrentPosition, mediaIndex)) {
             int seekTo = mPlayerDialogAdapter.moveTo(playerModels, mCurrentPosition, mediaIndex);
             simulationSeek(seekTo);
@@ -747,7 +764,6 @@ public class VPlayer implements SimulationHandler {
                         playerModels.add(url);
                         mDurationList.add(duration);
                         mDuration += duration;
-                        Log.d(getClass().getName(), "duration :" + duration);
                     }
                 }
             }
@@ -758,8 +774,8 @@ public class VPlayer implements SimulationHandler {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             mediaIndex = 0;
-            videoView.setOnCompletionListener(mCompleteListener);
-            simulatePlay(playerModels.get(mediaIndex++));
+            mVideoView.setOnCompletionListener(mCompleteListener);
+            simulatePlay(playerModels.get(mediaIndex++), 0);
         }
     }
 
@@ -767,22 +783,15 @@ public class VPlayer implements SimulationHandler {
     private IMediaPlayer.OnCompletionListener mCompleteListener = new IMediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(IMediaPlayer mp) {
-            Log.d(getClass().getName(), "here mediaIndex " + mediaIndex + " isUserSeek " + isUserSeek);
             if (mediaIndex < playerModels.size() && !isUserSeek) {
-                Log.d("mPosition",mediaIndex+" duration "+mDurationList.get(mediaIndex));
                 mPosition += mDurationList.get(mediaIndex - 1);
-                Log.d("mPosition","position is compList"+ mPosition);
-                simulatePlay(playerModels.get(mediaIndex++));
+                simulatePlay(playerModels.get(mediaIndex++), 0);
                 isUserSeek = false;
-                Log.d(getClass().getName(), "in if ");
             } else {
-
-                Log.d(getClass().getName(), "in else ");
                 statusChange(STATUS_COMPLETED);
                 oncomplete.run();
                 isUserSeek = false;
-                videoView.setOnCompletionListener(null);
-                //TODO: Complete Video Listener for others
+                mVideoView.setOnCompletionListener(null);
             }
         }
     };
@@ -802,22 +811,22 @@ public class VPlayer implements SimulationHandler {
         return timeInMilliSec;
     }
 
-    private void simulatePlay(PlayerModel model) {
+    private void simulatePlay(PlayerModel model, int seek) {
         PlayerModel.MediaType type = model.getType();
-        videoView.setOnCompletionListener(mCompleteListener);
+        mVideoView.setOnCompletionListener(mCompleteListener);
         if (type == PlayerModel.MediaType.IMAGE_AUDIO) {
-            videoView.setVisibility(View.GONE);
-            imageView.setVisibility(View.VISIBLE);
+            mVideoView.setVisibility(View.GONE);
+            mImageView.setVisibility(View.VISIBLE);
             Glide
                     .with(activity)
                     .load(model.getPath())
                     .crossFade()
-                    .into(imageView);
-            playRaw(model.getAudioPath());
+                    .into(mImageView);
+            playRaw(model.getAudioPath(), seek);
         } else if (type == PlayerModel.MediaType.VIDEO) {
-            imageView.setVisibility(View.GONE);
-            videoView.setVisibility(View.VISIBLE);
-            playRaw(model.getPath());
+            mImageView.setVisibility(View.GONE);
+            mVideoView.setVisibility(View.VISIBLE);
+            playRaw(model.getPath(), seek);
         }
     }
 
@@ -925,8 +934,8 @@ public class VPlayer implements SimulationHandler {
     }
 
     private void onProgressSlide(float percent) {
-        long position = videoView.getCurrentPosition();
-        long duration = videoView.getDuration();
+        long position = mVideoView.getCurrentPosition();
+        long duration = mVideoView.getDuration();
         long deltaMax = Math.min(100 * 1000, duration - position);
         long delta = (long) (deltaMax * percent);
 
@@ -980,17 +989,16 @@ public class VPlayer implements SimulationHandler {
             return 0;
         }
 
-        long videoPosition = videoView.getCurrentPosition();
-        long duration = mDuration;//videoView.getDuration();
+        long videoPosition = mVideoView.getCurrentPosition();
+        long duration = mDuration;//mVideoView.getDuration();
         long position = videoPosition + mPosition;
-        Log.d(getClass().getName(), "videoPosition " + videoPosition + " duration: " + mDuration + " mPosition " + mPosition);
         if (seekBar != null) {
             if (duration > 0) {
                 long pos = 1000L * (position) / duration;
 
                 seekBar.setProgress((int) pos);
             }
-            int percent = videoView.getBufferPercentage();
+            int percent = mVideoView.getBufferPercentage();
             seekBar.setSecondaryProgress(percent * 10);
         }
 
@@ -1036,22 +1044,22 @@ public class VPlayer implements SimulationHandler {
      */
     public void setScaleType(String scaleType) {
         if (SCALETYPE_FITPARENT.equals(scaleType)) {
-            videoView.setAspectRatio(IRenderView.AR_ASPECT_FIT_PARENT);
+            mVideoView.setAspectRatio(IRenderView.AR_ASPECT_FIT_PARENT);
         } else if (SCALETYPE_FILLPARENT.equals(scaleType)) {
-            videoView.setAspectRatio(IRenderView.AR_ASPECT_FILL_PARENT);
+            mVideoView.setAspectRatio(IRenderView.AR_ASPECT_FILL_PARENT);
         } else if (SCALETYPE_WRAPCONTENT.equals(scaleType)) {
-            videoView.setAspectRatio(IRenderView.AR_ASPECT_WRAP_CONTENT);
+            mVideoView.setAspectRatio(IRenderView.AR_ASPECT_WRAP_CONTENT);
         } else if (SCALETYPE_FITXY.equals(scaleType)) {
-            videoView.setAspectRatio(IRenderView.AR_MATCH_PARENT);
+            mVideoView.setAspectRatio(IRenderView.AR_MATCH_PARENT);
         } else if (SCALETYPE_16_9.equals(scaleType)) {
-            videoView.setAspectRatio(IRenderView.AR_16_9_FIT_PARENT);
+            mVideoView.setAspectRatio(IRenderView.AR_16_9_FIT_PARENT);
         } else if (SCALETYPE_4_3.equals(scaleType)) {
-            videoView.setAspectRatio(IRenderView.AR_4_3_FIT_PARENT);
+            mVideoView.setAspectRatio(IRenderView.AR_4_3_FIT_PARENT);
         }
     }
 
     /**
-     * 是否显示左上导航图标(一般有actionbar or appToolbar时需要隐藏)
+     * Show navigation
      *
      * @param show
      */
@@ -1060,11 +1068,11 @@ public class VPlayer implements SimulationHandler {
     }
 
     public void start() {
-        videoView.start();
+        mVideoView.start();
     }
 
     public void pause() {
-        videoView.pause();
+        mVideoView.pause();
     }
 
     public boolean onBackPressed() {
@@ -1189,7 +1197,7 @@ public class VPlayer implements SimulationHandler {
          */
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-            videoView.toggleAspectRatio();
+            mVideoView.toggleAspectRatio();
             return true;
         }
 
@@ -1216,10 +1224,10 @@ public class VPlayer implements SimulationHandler {
 
             if (toSeek) {
                 if (!isLive) {
-                    onProgressSlide(-deltaX / videoView.getWidth());
+                    onProgressSlide(-deltaX / mVideoView.getWidth());
                 }
             } else {
-                float percent = deltaY / videoView.getHeight();
+                float percent = deltaY / mVideoView.getHeight();
                 if (volumeControl) {
                     onVolumeSlide(percent);
                 } else {
@@ -1258,11 +1266,11 @@ public class VPlayer implements SimulationHandler {
      * @return
      */
     public boolean isPlaying() {
-        return videoView != null ? videoView.isPlaying() : false;
+        return mVideoView != null ? mVideoView.isPlaying() : false;
     }
 
     public void stop() {
-        videoView.stopPlayback();
+        mVideoView.stopPlayback();
     }
 
     /**
@@ -1271,7 +1279,7 @@ public class VPlayer implements SimulationHandler {
      * @param msec millisecond
      */
     public VPlayer seekTo(int msec, boolean showControlPanle) {
-        videoView.seekTo(msec);
+        mVideoView.seekTo(msec);
         if (showControlPanle) {
             show(defaultTimeout);
         }
@@ -1290,7 +1298,7 @@ public class VPlayer implements SimulationHandler {
     }
 
     public int getCurrentPosition() {
-        return videoView.getCurrentPosition();
+        return mVideoView.getCurrentPosition();
     }
 
     /**
@@ -1299,7 +1307,7 @@ public class VPlayer implements SimulationHandler {
      * @return
      */
     public int getDuration() {
-        return (int) mDuration;/* videoView.getDuration();*/
+        return (int) mDuration;/* mVideoView.getDuration();*/
     }
 
     public VPlayer playInFullScreen(boolean fullScreen) {
@@ -1363,8 +1371,8 @@ public class VPlayer implements SimulationHandler {
     }
 
     public VPlayer toggleAspectRatio() {
-        if (videoView != null) {
-            videoView.toggleAspectRatio();
+        if (mVideoView != null) {
+            mVideoView.toggleAspectRatio();
         }
         return this;
     }
